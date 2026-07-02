@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Asesor de uso de IA</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header>
+  <h1>🧭 Asesor de uso de IA</h1>
+  <div class="estado-chips">
+    <span class="chip" id="chip-ws">● conectando…</span>
+    <span class="chip" id="chip-clasificador">clasificador: —</span>
+    <span class="chip" id="chip-sesiones">0 sesiones</span>
+  </div>
+</header>
+
+<main>
+  <section class="col-izq">
+    <h2>Sesiones activas</h2>
+    <div id="sesiones" class="sesiones"></div>
+
+    <h2>Recomendaciones recientes</h2>
+    <div id="feed" class="feed"></div>
+  </section>
+
+  <aside class="col-der">
+    <h2>Probar prompt (antes de enviarlo)</h2>
+    <div class="panel">
+      <textarea id="probar-texto" rows="3" placeholder="Escribe aquí lo que piensas pedir a Claude… (Ctrl+Enter analiza)"></textarea>
+      <div class="fila"><button id="btn-probar">Analizar</button></div>
+      <div id="probar-resultado"></div>
+    </div>
+
+    <h2>Métricas (30 días)</h2>
+    <div id="metricas" class="metricas"></div>
+
+    <h2>Configuración</h2>
+    <div class="panel" id="panel-config">
+      <label class="fila"><input type="checkbox" id="cfg-capa2"> Capa 2 (clasificador IA vía <code>claude -p</code>)</label>
+      <label class="fila"><input type="checkbox" id="cfg-toasts"> Notificaciones de Windows</label>
+      <label class="fila" title="Requiere el hook instalado. Detiene el prompt una vez si el modelo recomendado difiere con confianza alta; el reenvío pasa siempre."><input type="checkbox" id="cfg-puerta"> Modo puerta: detener prompt si difiere</label>
+      <label class="fila">Latencia preferida
+        <select id="cfg-latencia">
+          <option value="rapido">rápido</option>
+          <option value="equilibrado">equilibrado</option>
+          <option value="calidad">calidad</option>
+        </select>
+      </label>
+      <label class="fila">Umbral conf. L1 para llamar a capa 2
+        <input type="number" id="cfg-umbral" min="0" max="1" step="0.05">
+      </label>
+      <label class="fila">Máx. llamadas capa 2 / min
+        <input type="number" id="cfg-maxllamadas" min="1" max="20" step="1">
+      </label>
+      <button id="btn-toast">Probar notificación</button>
+      <button id="btn-widget">Abrir widget flotante</button>
+    </div>
+
+    <h2>Integraciones</h2>
+    <div class="panel" id="panel-integraciones">
+      <div class="fila integ" data-integ="statusline">
+        <span>Statusline de Claude Code</span><button></button>
+      </div>
+      <div class="fila integ" data-integ="hook">
+        <span>Hook en la conversación (opt-in)</span><button></button>
+      </div>
+      <div class="fila integ" data-integ="autostart">
+        <span>Arrancar con Windows</span><button></button>
+      </div>
+      <p class="nota">Instalar modifica <code>settings.json</code> de Claude Code con copia de seguridad automática. El statusline original se conserva.</p>
+    </div>
+  </aside>
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>

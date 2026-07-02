@@ -1,0 +1,30 @@
+{
+  "puerto": 4977,
+  "capa2": {
+    "activada": true,
+    "modelo": "claude-haiku-4-5-20251001",
+    "umbralConfianzaL1": 0.75,
+    "maxLlamadasPorMinuto": 4,
+    "timeoutMs": 20000,
+    "cortarSiUso5h": 70,
+    "cacheTtlMinutos": 60
+  },
+  "toasts": {
+    "activados": true,
+    "cooldownMinutos": 5
+  },
+  "hookBloqueo": {
+    "activado": false,
+    "umbralConfianza": 0.75,
+    "ventanaRepeticionMinutos": 5
+  },
+  "preferenciaLatencia": "equilibrado",
+  "umbrales": {
+    "ctxCompact": 75,
+    "ctxSesionNueva": 90,
+    "cuota5hAlta": 80,
+    "cuotaSemanaAlta": 85,
+    "cuotaCritica": 95
+  },
+  "sesionInactivaMinutos": 10
+}

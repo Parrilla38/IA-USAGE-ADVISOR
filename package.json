@@ -1,0 +1,25 @@
+{
+  "name": "ai-usage-advisor",
+  "version": "1.0.0",
+  "description": "Asesor local de uso de IA para Claude Code: recomienda modelo y esfuerzo en tiempo real",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Parrilla38/ai-usage-advisor.git"
+  },
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "test": "node --test \"test/*.test.js\"",
+    "setup": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/setup.ps1",
+    "widget": "powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File scripts/widget.ps1"
+  },
+  "dependencies": {
+    "chokidar": "^4.0.3",
+    "express": "^4.21.2",
+    "node-notifier": "^10.0.1",
+    "ws": "^8.18.0"
+  }
+}

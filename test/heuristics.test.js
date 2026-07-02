@@ -1,0 +1,76 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import { recomendar } from '../src/engine/heuristics.js';
+import { extraerSenales } from '../src/signals/feature-extractor.js';
+import { SessionState } from '../src/signals/session-state.js';
+
+const cfg = JSON.parse(fs.readFileSync(new URL('../config.default.json', import.meta.url), 'utf8'));
+const fixtures = JSON.parse(fs.readFileSync(new URL('./fixtures/prompts.es.json', import.meta.url), 'utf8'));
+
+function senalesDe(texto, extra = {}) {
+  const estado = new SessionState('test');
+  return { ...extraerSenales(texto, estado, cfg, 'xhigh'), ...extra };
+}
+
+test('rúbrica: exactitud global >= 85% sobre fixtures etiquetados', () => {
+  let aciertos = 0;
+  const fallos = [];
+  for (const f of fixtures) {
+    const rec = recomendar(senalesDe(f.texto), cfg);
+    if (rec.modelo === f.modelo) aciertos++;
+    else fallos.push(`  "${f.texto}" → ${rec.modelo} (esperado ${f.modelo}, tipo ${rec.tipoId})`);
+  }
+  const exactitud = aciertos / fixtures.length;
+  assert.ok(exactitud >= 0.85, `exactitud ${(exactitud * 100).toFixed(1)}% (${aciertos}/${fixtures.length})\n${fallos.join('\n')}`);
+});
+
+test('toda recomendación trae razones y confianza válida', () => {
+  for (const f of fixtures) {
+    const rec = recomendar(senalesDe(f.texto), cfg);
+    assert.ok(rec.razones.length >= 1, f.texto);
+    assert.ok(rec.confianza > 0 && rec.confianza <= 1, f.texto);
+    assert.ok(['haiku', 'sonnet', 'opus', 'fable'].includes(rec.modelo), f.texto);
+  }
+});
+
+test('modificador: cuota 5h alta baja un nivel de modelo', () => {
+  const rec = recomendar(senalesDe('Crea una función que valide correos electrónicos', { cuota5h: 85 }), cfg);
+  assert.equal(rec.modelo, 'haiku');
+});
+
+test('modificador: cuota crítica baja dos niveles', () => {
+  const rec = recomendar(senalesDe('Diseña la arquitectura del nuevo sistema de colas', { cuota5h: 96 }), cfg);
+  assert.equal(rec.modelo, 'sonnet');
+});
+
+test('modificador: racha de errores de herramientas sube modelo y esfuerzo', () => {
+  const sinRacha = recomendar(senalesDe('Arregla el error al guardar el formulario'), cfg);
+  const conRacha = recomendar(senalesDe('Arregla el error al guardar el formulario', { rachaErrores: 4 }), cfg);
+  assert.equal(sinRacha.modelo, 'sonnet');
+  assert.equal(conRacha.modelo, 'opus');
+  assert.ok(['high', 'xhigh'].includes(conRacha.esfuerzo));
+});
+
+test('modificador: preferencia de latencia rápida capa en Sonnet salvo frontera', () => {
+  const refactor = recomendar(senalesDe('Refactoriza el módulo de pagos separando responsabilidades y capas', { preferenciaLatencia: 'rapido' }), cfg);
+  assert.equal(refactor.modelo, 'sonnet');
+  const arq = recomendar(senalesDe('Diseña la arquitectura del sistema de facturación', { preferenciaLatencia: 'rapido' }), cfg);
+  assert.equal(arq.modelo, 'fable'); // frontera no se capa
+});
+
+test('modificador: subagentes activos evitan bajar de modelo', () => {
+  const rec = recomendar(senalesDe('Formatea este fichero JSON', { subagentes: true, modeloActual: 'opus' }), cfg);
+  assert.equal(rec.modelo, 'opus');
+});
+
+test('haiku nunca lleva esfuerzo', () => {
+  const rec = recomendar(senalesDe('¿Qué es un closure?'), cfg);
+  assert.equal(rec.modelo, 'haiku');
+  assert.equal(rec.esfuerzo, null);
+});
+
+test('mención al repo entero escala la complejidad', () => {
+  const rec = recomendar(senalesDe('Añade tests para todo el proyecto, cada servicio con su suite'), cfg);
+  assert.ok(['opus', 'fable'].includes(rec.modelo));
+});
