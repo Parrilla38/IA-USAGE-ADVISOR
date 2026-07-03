@@ -17,6 +17,26 @@ export class SessionState {
     this.ultimaActividadTs = 0;
     this.statusline = { ctxPct: null, cuota5h: null, cuotaSemana: null, reset5h: null, modeloId: null };
     this.ultimaRec = null;
+    // Acumuladores del turno en curso (para el etiquetado implícito)
+    this.turnoRec = null;      // recomendación emitida para este turno
+    this.modeloTurno = null;   // modelo realmente usado en este turno
+    this.erroresTurno = 0;     // errores de herramienta dentro del turno
+  }
+
+  /**
+   * Cierra el turno en curso (se llama al llegar el prompt siguiente) y
+   * devuelve su resumen para etiquetarlo, o null si no hubo recomendación.
+   */
+  cerrarTurno() {
+    if (!this.turnoRec) return null;
+    const cerrado = {
+      rec: this.turnoRec,
+      modeloUsado: this.modeloTurno,
+      erroresTurno: this.erroresTurno,
+      promptAnterior: this.ultimoPrompt,
+    };
+    this.turnoRec = null;
+    return cerrado;
   }
 
   aplicar(ev) {
@@ -28,11 +48,16 @@ export class SessionState {
         this.ultimoPrompt = ev.texto;
         this.attachmentsTurno = this.attachmentsPendientes;
         this.attachmentsPendientes = 0;
+        this.modeloTurno = null;
+        this.erroresTurno = 0;
         if (ev.cwd) this.cwd = ev.cwd;
         if (ev.gitBranch) this.gitBranch = ev.gitBranch;
         break;
       case 'assistant':
-        if (ev.modelo) this.modeloActualId = ev.modelo;
+        if (ev.modelo) {
+          this.modeloActualId = ev.modelo;
+          this.modeloTurno = mapearModelo(ev.modelo) || this.modeloTurno;
+        }
         if (ev.usage) {
           this.tokens.entrada += ev.usage.input_tokens || 0;
           this.tokens.salida += ev.usage.output_tokens || 0;
@@ -41,6 +66,7 @@ export class SessionState {
         }
         break;
       case 'tool_result':
+        this.erroresTurno += ev.errores || 0;
         for (let i = 0; i < (ev.total || 0); i++) {
           this.resultadosTools.push(i < (ev.errores || 0));
         }

@@ -18,7 +18,8 @@ import { fusionar } from './engine/fusion.js';
 import { NOMBRES_MODELO } from './engine/modelos.js';
 import { programarStateFile } from './output/state-file.js';
 import { Notificador } from './output/notifier.js';
-import { anotarRecomendacion } from './output/history-store.js';
+import { anotarRecomendacion, anotarEtiqueta } from './output/history-store.js';
+import { construirEtiqueta } from './signals/outcome.js';
 import { crearApp } from './server/http.js';
 import { crearWs } from './server/ws.js';
 
@@ -155,6 +156,7 @@ async function main() {
   // --- Pipeline principal por sesión ---
   function publicar(rec, entrada) {
     entrada.estado.ultimaRec = rec;
+    entrada.estado.turnoRec = rec; // para el etiquetado implícito al cerrar el turno
     anotarRecomendacion({
       ...rec,
       senales: rec.senalesResumen,
@@ -224,6 +226,15 @@ async function main() {
   function procesarEntrada(entrada, cruda) {
     const ev = parsearEntrada(cruda);
     if (!ev) return;
+    // Un prompt nuevo cierra el turno anterior → etiqueta implícita
+    if (ev.kind === 'prompt') {
+      const cerrado = entrada.estado.cerrarTurno();
+      if (cerrado) {
+        const etiqueta = construirEtiqueta(cerrado, ev.texto, entrada.info.sessionId);
+        anotarEtiqueta(etiqueta);
+        wsApi.broadcast('etiqueta', etiqueta);
+      }
+    }
     entrada.estado.aplicar(ev);
     if (ev.kind === 'prompt') {
       const edad = Date.now() - (Date.parse(ev.ts || '') || 0);

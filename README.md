@@ -103,7 +103,17 @@ Honestamente: es una **rúbrica razonada, no un oráculo**. Funciona muy bien en
 - La confianza se muestra **siempre**: un consejo al 50 % es una sugerencia, no una orden.
 - Las razones se listan en texto plano: puedes auditar cada decisión.
 - El feedback 👍/👎 del dashboard alimenta una métrica de acierto local para que evalúes si te sirve.
-- Las heurísticas se validan contra **84 prompts etiquetados** (ES + EN); el test exige ≥ 90 % de acierto de modelo y la versión actual da 100 % (`npm test`, 29 tests).
+- Las heurísticas se validan contra **84 prompts etiquetados** (ES + EN); el test exige ≥ 90 % de acierto de modelo y la versión actual da 100 % (`npm test`, 39 tests).
+
+### Etiquetado implícito: el asesor se examina con tu uso real
+
+El 100 % sobre fixtures es el examen que nosotros mismos escribimos. La medida honesta sale de tu uso diario, y se captura sola:
+
+- Si te recomienda Sonnet y cambias a Opus con `/model`, eso queda registrado como discrepancia etiquetada **por ti**, sin que hagas nada.
+- Si sigues el consejo y el turno va limpio → acierto. Si sigues el consejo y el turno fracasa (3+ errores de herramienta o reenvías el mismo prompt) → posible recomendación corta.
+- Caso clave: si usas un modelo **menor** que el recomendado y el turno fracasa, eso **confirma** la recomendación (`bajo_y_fallo`). No todo desacuerdo es error del asesor.
+
+Cada turno cerrado genera una etiqueta JSONL local (`%LOCALAPPDATA%\ai-usage-advisor\history\etiquetas-*.jsonl`) con veredicto: `acierto` · `corto` · `usuario_subio` · `usuario_bajo` · `bajo_y_fallo` · `indeterminado`. El dashboard muestra la **tasa de acierto real implícita** y el desglose de veredictos en Métricas. Con unas semanas de uso, ese fichero se convierte en un dataset etiquetado con el que ajustar los pesos del léxico (o entrenar un clasificador estadístico local) contra tu forma real de trabajar, no contra nuestros ejemplos.
 
 ## Pruebas
 

@@ -1,6 +1,6 @@
 {
   "name": "ai-usage-advisor",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Asesor local de uso de IA para Claude Code: recomienda modelo y esfuerzo en tiempo real",
   "license": "MIT",
   "repository": {

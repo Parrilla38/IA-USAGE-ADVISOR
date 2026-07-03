@@ -63,6 +63,9 @@ function conectar() {
         estado.feedback.set(p.recId, p.util);
         renderFeed();
         break;
+      case 'etiqueta':
+        cargarMetricas();
+        break;
       default: break;
     }
   };
@@ -195,11 +198,23 @@ async function cargarMetricas() {
       const total = Object.values(obj).reduce((x, y) => x + y, 0) || 1;
       return `<div class="df"><span>${esc(NOMBRES[k] || k)}</span><div class="barra"><div style="width:${(v / total) * 100}%"></div></div><span>${v}</span></div>`;
     }).join('') || '<span class="nota">sin datos</span>';
+    const et = m.etiquetas || {};
+    const NOMBRES_VEREDICTO = {
+      acierto: 'consejo seguido y turno OK',
+      bajo_y_fallo: 'usó menos y falló (el consejo tenía razón)',
+      corto: 'consejo seguido pero el turno fracasó',
+      usuario_subio: 'el usuario subió de modelo',
+      usuario_bajo: 'el usuario bajó de modelo y fue bien',
+    };
+    const veredictos = Object.entries(et.porVeredicto || {}).sort((a, b) => b[1] - a[1])
+      .map(([k, v]) => `<div class="df ancho"><span>${esc(NOMBRES_VEREDICTO[k] || k)}</span><span>${v}</span></div>`)
+      .join('') || '<span class="nota">aún sin turnos evaluables — usa Claude Code con normalidad y esto se rellena solo</span>';
     $('#metricas').innerHTML = `
       <div class="stat"><div class="valor">${m.totalRecomendaciones}</div><div class="etiqueta">recomendaciones</div></div>
+      <div class="stat"><div class="valor">${et.tasa != null ? et.tasa + '%' : '—'}</div><div class="etiqueta">acierto real implícito (${et.evaluables || 0} turnos)</div></div>
       <div class="stat"><div class="valor">${m.feedback.acierto != null ? m.feedback.acierto + '%' : '—'}</div><div class="etiqueta">acierto (feedback: ${m.feedback.total})</div></div>
       <div class="stat"><div class="valor">${m.coincidenciaL1L2 != null ? m.coincidenciaL1L2 + '%' : '—'}</div><div class="etiqueta">coincidencia L1↔L2 (${m.llamadasCapa2})</div></div>
-      <div class="stat"><div class="valor">${m.divergencias}</div><div class="etiqueta">divergencias con el modelo usado</div></div>
+      <div class="dist"><strong>Veredictos de turnos reales</strong>${veredictos}</div>
       <div class="dist"><strong>Recomendado</strong>${dist(m.distribucion)}</div>
       <div class="dist"><strong>Usado realmente</strong>${dist(m.distribucionUsado)}</div>`;
   } catch { /* métricas no disponibles */ }
