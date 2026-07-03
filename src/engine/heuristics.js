@@ -1,4 +1,4 @@
-import { detectarTipo } from './lexicon.es.js';
+import { puntuar, RE_ACK, RE_CONTINUACION } from './lexicon.es.js';
 import { moverModelo, moverEsfuerzo, maxModelo, maxEsfuerzo, idxModelo } from './modelos.js';
 
 /** Rúbrica base: tipo de tarea → grupo, modelo, esfuerzo, confianza. */
@@ -10,9 +10,11 @@ export const BASE = {
   codificacion:    { grupo: 'estandar', modelo: 'sonnet', esfuerzo: 'medium', conf: 0.75, nombre: 'Codificación cotidiana' },
   integracion:     { grupo: 'estandar', modelo: 'sonnet', esfuerzo: 'high', conf: 0.7, nombre: 'Codificación con integración' },
   debugging:       { grupo: 'estandar', modelo: 'sonnet', esfuerzo: 'high', conf: 0.7, nombre: 'Debugging' },
+  rendimiento:     { grupo: 'estandar', modelo: 'sonnet', esfuerzo: 'high', conf: 0.7, nombre: 'Optimización de rendimiento' },
   analisis_datos:  { grupo: 'estandar', modelo: 'sonnet', esfuerzo: 'medium', conf: 0.7, nombre: 'Análisis de datos / script' },
   documentacion:   { grupo: 'estandar', modelo: 'haiku', esfuerzo: null, conf: 0.7, nombre: 'Documentación / redacción' },
   revision:        { grupo: 'complejo', modelo: 'sonnet', esfuerzo: 'high', conf: 0.7, nombre: 'Revisión de código' },
+  seguridad:       { grupo: 'complejo', modelo: 'opus', esfuerzo: 'xhigh', conf: 0.75, nombre: 'Seguridad / vulnerabilidades' },
   debugging_duro:  { grupo: 'complejo', modelo: 'opus', esfuerzo: 'xhigh', conf: 0.75, nombre: 'Debugging duro' },
   refactor:        { grupo: 'complejo', modelo: 'opus', esfuerzo: 'xhigh', conf: 0.75, nombre: 'Refactor multi-fichero' },
   refactor_masivo: { grupo: 'frontera', modelo: 'fable', esfuerzo: 'xhigh', conf: 0.7, nombre: 'Refactor masivo' },
@@ -38,18 +40,58 @@ const RE_DOC_TECNICA = /\b(api|endpoint|t[eé]cnic|detallad|exhaustiv|arquitectu
 function redondear(x) { return Math.round(x * 100) / 100; }
 
 /**
- * CAPA 1: recomendación síncrona por rúbrica + modificadores.
+ * Ganador de la puntuación léxica. Empate a puntos → gana el grupo de mayor
+ * capacidad (quedarse corto cuesta más que pasarse). El margen se mide contra
+ * el mejor tipo que llevaría a OTRO modelo (rivales con el mismo modelo no
+ * cambian la decisión y no penalizan confianza).
+ */
+function elegirTipo(punt) {
+  if (!punt.size) return null;
+  let mejor = null;
+  for (const [tipo, pts] of punt) {
+    if (!mejor || pts > mejor.pts + 1e-9 ||
+        (Math.abs(pts - mejor.pts) < 1e-9 && GRUPOS[BASE[tipo].grupo] > GRUPOS[BASE[mejor.tipo].grupo])) {
+      mejor = { tipo, pts };
+    }
+  }
+  let rival = null;
+  let rivalPts = 0;
+  for (const [tipo, pts] of punt) {
+    if (tipo === mejor.tipo || BASE[tipo].modelo === BASE[mejor.tipo].modelo) continue;
+    if (pts > rivalPts) { rival = tipo; rivalPts = pts; }
+  }
+  return { tipo: mejor.tipo, puntos: mejor.pts, rival, margen: mejor.pts - rivalPts };
+}
+
+/**
+ * CAPA 1: recomendación síncrona por rúbrica puntuada + modificadores.
  * señales → { modelo, esfuerzo, confianza, tipoTarea, tipoId, complejidad, razones[] }
  */
 export function recomendar(s, cfg) {
   const u = cfg.umbrales || {};
   const razones = [];
   let confOverride = null;
+  let esContinuacion = false;
 
-  // --- Detección de tipo (con guardas y fallbacks) ---
-  let tipo = detectarTipo(s.texto);
+  // --- Detección de tipo por puntuación léxica ---
+  const punt = puntuar(s.texto);
+  let det = elegirTipo(punt);
+  let tipo = det?.tipo ?? null;
+
+  // Continuación / confirmación corta: hereda el tipo del turno anterior
+  // (solo si el léxico no encontró nada fuerte por sí mismo).
+  if (s.tipoPrevio && BASE[s.tipoPrevio] && (det?.puntos ?? 0) < 2 &&
+      (RE_ACK.test(s.texto) || (RE_CONTINUACION.test(s.texto) && s.palabras <= 8))) {
+    tipo = s.tipoPrevio;
+    det = null;
+    esContinuacion = true;
+    confOverride = Math.min(0.75, Math.max(0.5, (s.confPrevia ?? BASE[tipo].conf) - 0.1));
+    razones.push('continuación del turno anterior: hereda el tipo de tarea');
+  }
+
   if (tipo === 'ambigua' && (s.palabras >= 25 || s.ficheros > 0 || s.densidadCodigo >= 0.3 || RE_OBJETO_CONCRETO.test(s.texto))) {
     tipo = 'codificacion';
+    det = null;
     confOverride = 0.6;
     razones.push('objetivo de mejora con contexto concreto');
   }
@@ -73,13 +115,30 @@ export function recomendar(s, cfg) {
   const idxGrupo = GRUPOS[base.grupo];
   let conf = confOverride ?? base.conf;
 
+  // --- Confianza según la puntuación léxica ---
+  if (det) {
+    if (det.puntos >= 4) {
+      conf += 0.05;
+      razones.push(`varias señales léxicas independientes coinciden (${det.puntos} pts)`);
+    } else if (det.puntos < 2) {
+      conf -= 0.05;
+    }
+    if (det.rival && det.margen <= 0.5) {
+      conf -= 0.07;
+      razones.push(`señales mixtas: también podría ser ${BASE[det.rival].nombre.toLowerCase()}`);
+    }
+  }
+
   // --- Complejidad estructural (ajusta el grupo base) ---
   let ajuste = 0;
   if (s.mencionRepoEntero) { ajuste += 2; razones.push('menciona el proyecto entero'); }
   if (s.ficheros > 20) { ajuste += 2; razones.push(`${s.ficheros} ficheros implicados`); }
   else if (s.ficheros > 5) { ajuste += 1; razones.push(`${s.ficheros} ficheros implicados`); }
   if (s.palabras > 250) { ajuste += 1; razones.push('prompt muy extenso'); }
-  if (s.palabras < 15 && s.densidadCodigo < 0.2 && s.ficheros === 0 && (idxGrupo === 1 || idxGrupo === 2)) {
+  // La brevedad solo abarata tareas cuyo alcance crece con el prompt (estándar,
+  // revisión). En seguridad o debugging duro un prompt corto no es tarea pequeña.
+  if (!esContinuacion && s.palabras < 15 && s.densidadCodigo < 0.2 && s.ficheros === 0 &&
+      (idxGrupo === 1 || tipo === 'revision')) {
     ajuste -= 1;
     razones.push('petición breve y acotada');
   }
@@ -106,6 +165,12 @@ export function recomendar(s, cfg) {
     modelo = maxModelo(modelo, 'opus');
     esfuerzo = 'xhigh';
     razones.push('revisión de alcance grande');
+  }
+  // Dos peticiones de arreglo seguidas: el problema resiste más de lo que parece
+  if (tipo === 'debugging' && (s.tipoPrevio === 'debugging' || s.tipoPrevio === 'debugging_duro')) {
+    modelo = moverModelo(modelo, +1);
+    esfuerzo = maxEsfuerzo(esfuerzo, 'high');
+    razones.push('segundo intento de arreglo consecutivo: subir capacidad');
   }
 
   // --- Modificadores (en orden) ---

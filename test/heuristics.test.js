@@ -13,7 +13,7 @@ function senalesDe(texto, extra = {}) {
   return { ...extraerSenales(texto, estado, cfg, 'xhigh'), ...extra };
 }
 
-test('rúbrica: exactitud global >= 85% sobre fixtures etiquetados', () => {
+test('rúbrica: exactitud global >= 90% sobre fixtures etiquetados', () => {
   let aciertos = 0;
   const fallos = [];
   for (const f of fixtures) {
@@ -22,7 +22,7 @@ test('rúbrica: exactitud global >= 85% sobre fixtures etiquetados', () => {
     else fallos.push(`  "${f.texto}" → ${rec.modelo} (esperado ${f.modelo}, tipo ${rec.tipoId})`);
   }
   const exactitud = aciertos / fixtures.length;
-  assert.ok(exactitud >= 0.85, `exactitud ${(exactitud * 100).toFixed(1)}% (${aciertos}/${fixtures.length})\n${fallos.join('\n')}`);
+  assert.ok(exactitud >= 0.9, `exactitud ${(exactitud * 100).toFixed(1)}% (${aciertos}/${fixtures.length})\n${fallos.join('\n')}`);
 });
 
 test('toda recomendación trae razones y confianza válida', () => {
@@ -73,4 +73,52 @@ test('haiku nunca lleva esfuerzo', () => {
 test('mención al repo entero escala la complejidad', () => {
   const rec = recomendar(senalesDe('Añade tests para todo el proyecto, cada servicio con su suite'), cfg);
   assert.ok(['opus', 'fable'].includes(rec.modelo));
+});
+
+test('continuación corta hereda el tipo del turno anterior', () => {
+  const rec = recomendar(senalesDe('continúa', { tipoPrevio: 'refactor', confPrevia: 0.75 }), cfg);
+  assert.equal(rec.modelo, 'opus');
+  assert.ok(rec.razones.some((r) => r.includes('continuación')));
+});
+
+test('confirmación tipo "sí, hazlo" hereda el tipo del turno anterior', () => {
+  const rec = recomendar(senalesDe('sí, hazlo', { tipoPrevio: 'arquitectura', confPrevia: 0.8 }), cfg);
+  assert.equal(rec.modelo, 'fable');
+});
+
+test('sin turno previo, "continúa" no rompe (cae al fallback)', () => {
+  const rec = recomendar(senalesDe('continúa'), cfg);
+  assert.equal(rec.modelo, 'haiku');
+});
+
+test('dos prompts de debugging seguidos escalan la capacidad', () => {
+  const solo = recomendar(senalesDe('Arregla el error al guardar el formulario'), cfg);
+  const repetido = recomendar(senalesDe('Arregla el error al guardar el formulario', { tipoPrevio: 'debugging' }), cfg);
+  assert.equal(solo.modelo, 'sonnet');
+  assert.equal(repetido.modelo, 'opus');
+});
+
+test('rendimiento con objeto concreto → sonnet', () => {
+  const rec = recomendar(senalesDe('La página tarda 8 segundos en cargar, optimízala'), cfg);
+  assert.equal(rec.modelo, 'sonnet');
+  assert.equal(rec.tipoId, 'rendimiento');
+});
+
+test('seguridad → opus/xhigh', () => {
+  const rec = recomendar(senalesDe('Audita la seguridad del endpoint de subida de ficheros'), cfg);
+  assert.equal(rec.modelo, 'opus');
+  assert.equal(rec.esfuerzo, 'xhigh');
+});
+
+test('señales mixtas entre modelos distintos reducen la confianza', () => {
+  const limpio = recomendar(senalesDe('¿Qué es un closure en JavaScript?'), cfg);
+  const mixto = recomendar(senalesDe('Explica el error'), cfg);
+  assert.ok(mixto.confianza < limpio.confianza);
+  assert.ok(mixto.razones.some((r) => r.includes('mixtas')));
+});
+
+test('varias señales léxicas del mismo tipo suben la confianza', () => {
+  const rec = recomendar(senalesDe('Diseña la arquitectura de un sistema de colas de trabajos con reintentos y prioridades'), cfg);
+  assert.ok(rec.confianza >= 0.8);
+  assert.ok(rec.razones.some((r) => r.includes('coinciden')));
 });

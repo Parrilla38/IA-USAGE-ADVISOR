@@ -38,5 +38,7 @@ export function extraerSenales(texto, estado, cfg, esfuerzoActual) {
     reset5h: estado.statusline?.reset5h ?? null,
     preferenciaLatencia: cfg.preferenciaLatencia || 'equilibrado',
     mencionRepoEntero: RE_REPO_ENTERO.test(texto),
+    tipoPrevio: estado.ultimaRec?.l1?.tipoId ?? null,
+    confPrevia: estado.ultimaRec?.l1?.confianza ?? null,
   };
 }

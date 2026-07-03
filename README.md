@@ -67,18 +67,22 @@ CLI equivalente: `node src/integrations/installer.js <statusline|hook|autostart>
 
 ## ¿En qué se basa la recomendación?
 
-### Capa 1 — Rúbrica heurística (instantánea, siempre activa)
+### Capa 1 — Léxico puntuado + rúbrica (instantánea, siempre activa)
 
-Clasifica el prompt en 15 tipos de tarea mediante léxico español/inglés y lo cruza con la complejidad estructural detectada:
+Cada prompt se puntúa contra ~35 reglas léxicas ES/EN con **pesos por especificidad** (3 = inequívoco como «race condition», 0.5 = verbo vago como «mejora»). Cada tipo de tarea acumula los puntos de todas sus reglas que casen; **gana el que más suma** y los empates se resuelven a favor del grupo más capaz (quedarse corto cuesta más que pasarse). Son 17 tipos agrupados así:
 
 | Grupo | Tareas típicas | Modelo | Esfuerzo |
 |---|---|---|---|
 | **Trivial** | Preguntas rápidas, formateo, comandos, docs cortas | Haiku 4.5 | — |
-| **Estándar** | Edición puntual, codificación cotidiana, bugs, análisis de datos | Sonnet 5 | low–high |
-| **Complejo** | Debugging duro, refactor multi-fichero, revisiones grandes | Opus 4.8 | xhigh |
+| **Estándar** | Edición puntual, codificación cotidiana, bugs, rendimiento, análisis de datos | Sonnet 5 | low–high |
+| **Complejo** | Debugging duro, seguridad/vulnerabilidades, refactor multi-fichero, revisiones grandes | Opus 4.8 | xhigh |
 | **Frontera** | Arquitectura, planificación, refactor masivo, specs ambiguas | Fable 5 | xhigh |
 
-Después aplica **modificadores** en orden: racha de fallos de herramientas ⇒ sube capacidad · cuota alta ⇒ baja a modelo más económico (salvo tareas frontera) · cuota crítica ⇒ baja dos niveles · preferencia "rápido" ⇒ tope en Sonnet · subagentes activos ⇒ nunca bajar de modelo a mitad de orquestación.
+La puntuación también calibra la **confianza**: varias señales independientes que coinciden la suben; señales mixtas que apuntan a modelos distintos («explica el error»: ¿pregunta o bug?) la bajan y se declara en las razones.
+
+Además hay **memoria de sesión**: una continuación corta («continúa», «sí, hazlo») hereda el tipo de tarea del turno anterior en vez de caer en "pregunta rápida", y dos peticiones de arreglo seguidas escalan la capacidad (si el primer intento no bastó, el problema es más duro de lo que parece).
+
+Después aplica **modificadores** en orden: racha de fallos de herramientas ⇒ sube capacidad · cuota alta ⇒ baja a modelo más económico (salvo tareas frontera) · cuota crítica ⇒ baja dos niveles · preferencia "rápido" ⇒ tope en Sonnet · subagentes activos ⇒ nunca bajar de modelo a mitad de orquestación. La brevedad del prompt solo abarata tareas estándar: «hay un deadlock» son tres palabras y sigue siendo trabajo para Opus.
 
 Cada recomendación lleva su **nivel de confianza** (0.3–1.0) y la **lista de razones** que la justifican, para que decidas tú.
 
@@ -99,7 +103,7 @@ Honestamente: es una **rúbrica razonada, no un oráculo**. Funciona muy bien en
 - La confianza se muestra **siempre**: un consejo al 50 % es una sugerencia, no una orden.
 - Las razones se listan en texto plano: puedes auditar cada decisión.
 - El feedback 👍/👎 del dashboard alimenta una métrica de acierto local para que evalúes si te sirve.
-- Las heurísticas están testeadas con fixtures etiquetados (`npm test`, 21 tests).
+- Las heurísticas se validan contra **84 prompts etiquetados** (ES + EN); el test exige ≥ 90 % de acierto de modelo y la versión actual da 100 % (`npm test`, 29 tests).
 
 ## Pruebas
 
