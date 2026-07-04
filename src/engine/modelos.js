@@ -28,6 +28,25 @@ export function maxModelo(a, b) {
   return idxModelo(a) >= idxModelo(b) ? a : b;
 }
 
+/**
+ * ¿Está el modelo disponible en el plan del usuario? Config modelosNoDisponibles:
+ * true = nunca disponible · "YYYY-MM-DD" = no disponible DESDE esa fecha (incl.).
+ */
+export function modeloDisponible(m, noDisponibles, ahora = new Date()) {
+  const regla = noDisponibles?.[m];
+  if (!regla) return true;
+  if (regla === true) return false;
+  const desde = new Date(`${regla}T00:00:00`);
+  return !(Number.isFinite(desde.getTime()) && ahora >= desde);
+}
+
+/** Baja el modelo hasta el primer nivel disponible (el más bajo se asume siempre). */
+export function ajustarADisponible(m, noDisponibles, ahora = new Date()) {
+  let i = idxModelo(m);
+  while (i > 0 && !modeloDisponible(NIVELES_MODELO[i], noDisponibles, ahora)) i--;
+  return i < 0 ? m : NIVELES_MODELO[i];
+}
+
 export function moverEsfuerzo(e, delta) {
   if (e == null) return null;
   const i = NIVELES_ESFUERZO.indexOf(e);

@@ -1,5 +1,5 @@
 import { puntuar, RE_ACK, RE_CONTINUACION, RE_ORDEN_REFERENCIAL } from './lexicon.es.js';
-import { moverModelo, moverEsfuerzo, maxModelo, maxEsfuerzo, idxModelo } from './modelos.js';
+import { moverModelo, moverEsfuerzo, maxModelo, maxEsfuerzo, idxModelo, ajustarADisponible, NOMBRES_MODELO } from './modelos.js';
 
 /** Rúbrica base: tipo de tarea → grupo, modelo, esfuerzo, confianza. */
 export const BASE = {
@@ -223,7 +223,16 @@ export function recomendar(s, cfg) {
     modelo = s.modeloActual;
     razones.push('subagentes activos: mantener el modelo de la orquestación');
   }
-  // 5. Haiku 4.5 no soporta el parámetro de esfuerzo
+  // 5. Modelos fuera del plan (p. ej. Fable pasa a cobro por tokens desde una
+  // fecha): nunca recomendar lo que el usuario no puede usar; bajar al
+  // disponible más capaz y compensar con esfuerzo alto.
+  const disponible = ajustarADisponible(modelo, cfg.modelosNoDisponibles);
+  if (disponible !== modelo) {
+    razones.push(`${NOMBRES_MODELO[modelo]} no disponible en tu plan: tope en ${NOMBRES_MODELO[disponible]}`);
+    modelo = disponible;
+    if (modelo !== 'haiku') esfuerzo = maxEsfuerzo(esfuerzo, 'high');
+  }
+  // 6. Haiku 4.5 no soporta el parámetro de esfuerzo
   if (modelo === 'haiku') esfuerzo = null;
 
   return {

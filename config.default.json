@@ -19,6 +19,7 @@
     "ventanaRepeticionMinutos": 5
   },
   "preferenciaLatencia": "equilibrado",
+  "modelosNoDisponibles": {},
   "umbrales": {
     "ctxCompact": 75,
     "ctxSesionNueva": 90,

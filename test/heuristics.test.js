@@ -64,6 +64,26 @@ test('modificador: subagentes activos evitan bajar de modelo', () => {
   assert.equal(rec.modelo, 'opus');
 });
 
+test('modelo no disponible desde una fecha pasada → baja al siguiente disponible', () => {
+  const cfgSinFable = { ...cfg, modelosNoDisponibles: { fable: '2020-01-01' } };
+  const rec = recomendar(senalesDe('Diseña la arquitectura del sistema de facturación'), cfgSinFable);
+  assert.equal(rec.modelo, 'opus');
+  assert.equal(rec.esfuerzo, 'xhigh');
+  assert.ok(rec.razones.some((r) => r.includes('no disponible en tu plan')));
+});
+
+test('modelo no disponible desde una fecha futura → aún se recomienda', () => {
+  const cfgFuturo = { ...cfg, modelosNoDisponibles: { fable: '2099-01-01' } };
+  const rec = recomendar(senalesDe('Diseña la arquitectura del sistema de facturación'), cfgFuturo);
+  assert.equal(rec.modelo, 'fable');
+});
+
+test('varios modelos vetados encadenan la bajada', () => {
+  const cfgRecortado = { ...cfg, modelosNoDisponibles: { fable: true, opus: true } };
+  const rec = recomendar(senalesDe('Diseña la arquitectura del sistema de facturación'), cfgRecortado);
+  assert.equal(rec.modelo, 'sonnet');
+});
+
 test('haiku nunca lleva esfuerzo', () => {
   const rec = recomendar(senalesDe('¿Qué es un closure?'), cfg);
   assert.equal(rec.modelo, 'haiku');

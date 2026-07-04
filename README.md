@@ -82,7 +82,7 @@ La puntuación también calibra la **confianza**: varias señales independientes
 
 Además hay **memoria de sesión** con contexto conversacional: si Claude propone algo («¿quieres que haga una auditoría de seguridad?») y respondes «implementa» o «sí, hazlo», el asesor puntúa la **última respuesta del asistente** para saber QUÉ vas a implementar y recomienda modelo para esa tarea (auditoría → Opus/xhigh), no para las dos palabras del prompt. Una continuación («continúa») hereda el tipo de tarea del turno anterior en vez de caer en "pregunta rápida", y dos peticiones de arreglo seguidas escalan la capacidad (si el primer intento no bastó, el problema es más duro de lo que parece).
 
-Después aplica **modificadores** en orden: racha de fallos de herramientas ⇒ sube capacidad · cuota alta ⇒ baja a modelo más económico (salvo tareas frontera) · cuota crítica ⇒ baja dos niveles · preferencia "rápido" ⇒ tope en Sonnet · subagentes activos ⇒ nunca bajar de modelo a mitad de orquestación. La brevedad del prompt solo abarata tareas estándar: «hay un deadlock» son tres palabras y sigue siendo trabajo para Opus.
+Después aplica **modificadores** en orden: racha de fallos de herramientas ⇒ sube capacidad · cuota alta ⇒ baja a modelo más económico (salvo tareas frontera) · cuota crítica ⇒ baja dos niveles · preferencia "rápido" ⇒ tope en Sonnet · subagentes activos ⇒ nunca bajar de modelo a mitad de orquestación · modelos fuera de tu plan ⇒ nunca se recomiendan (config `modelosNoDisponibles`, admite fecha: «Fable deja de estar incluido el 7 de julio» se declara una vez y el asesor lo respeta solo). La brevedad del prompt solo abarata tareas estándar: «hay un deadlock» son tres palabras y sigue siendo trabajo para Opus.
 
 Cada recomendación lleva su **nivel de confianza** (0.3–1.0) y la **lista de razones** que la justifican, para que decidas tú.
 
@@ -139,6 +139,12 @@ Checklist E2E manual:
 ## Configuración
 
 Copia `config.default.json` a `%LOCALAPPDATA%\ai-usage-advisor\config.json` y ajusta: puerto, umbrales de cuota/contexto, cooldown de toasts, preferencia de latencia (`equilibrado`/`rapido`), y todos los parámetros de la capa 2.
+
+`modelosNoDisponibles` declara modelos que tu plan no incluye y que el asesor jamás debe recomendar (la recomendación baja al siguiente nivel disponible). Cada entrada acepta `true` (nunca disponible) o una fecha `"YYYY-MM-DD"` (no disponible desde ese día):
+
+```json
+"modelosNoDisponibles": { "fable": "2026-07-07" }
+```
 
 ## Estructura del código
 

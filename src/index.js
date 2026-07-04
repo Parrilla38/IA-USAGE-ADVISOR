@@ -15,7 +15,7 @@ import { recomendar } from './engine/heuristics.js';
 import { consejos } from './engine/advice.js';
 import { Clasificador } from './engine/classifier.js';
 import { fusionar } from './engine/fusion.js';
-import { NOMBRES_MODELO } from './engine/modelos.js';
+import { NOMBRES_MODELO, ajustarADisponible } from './engine/modelos.js';
 import { programarStateFile } from './output/state-file.js';
 import { Notificador } from './output/notifier.js';
 import { anotarRecomendacion, anotarEtiqueta } from './output/history-store.js';
@@ -203,6 +203,13 @@ async function main() {
       if (!l2) return;
       if (entrada.ultimoTurno !== (ev.uuid || rec.id)) return; // llegó tarde: turno nuevo en curso
       const fusion = fusionar(l1, l2);
+      // La capa 2 también debe respetar los modelos fuera del plan
+      const ajustado = ajustarADisponible(fusion.modelo, cfg.modelosNoDisponibles);
+      if (ajustado !== fusion.modelo) {
+        fusion.razones = [...fusion.razones, `${NOMBRES_MODELO[fusion.modelo]} no disponible en tu plan: tope en ${NOMBRES_MODELO[ajustado]}`];
+        fusion.modelo = ajustado;
+        if (ajustado === 'haiku') fusion.esfuerzo = null;
+      }
       rec = {
         ...rec,
         ...fusion,
