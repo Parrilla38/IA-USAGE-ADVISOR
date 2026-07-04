@@ -1,4 +1,4 @@
-# 🧭 AI Usage Advisor — asesor de modelo para Claude Code
+# 🧭 AI Model Assistant — asesor de modelo para Claude Code
 
 > **¿Estás usando Opus para preguntar qué es un closure? ¿O Haiku para rediseñar tu arquitectura?**
 > Esta app te lo dice **antes** de que gastes el turno.
