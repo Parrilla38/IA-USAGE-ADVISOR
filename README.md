@@ -1,9 +1,9 @@
-# 🧭 AI Usage Advisor — asesor de modelo para Claude Code
+# 🧭 AI Model Assistant — asesor de modelo para Claude Code
 
 > **¿Estás usando Opus para preguntar qué es un closure? ¿O Haiku para rediseñar tu arquitectura?**
 > Esta app te lo dice **antes** de que gastes el turno.
 
-**AI Usage Advisor** es una aplicación **100 % local para Windows** que observa en tiempo real tus sesiones de [Claude Code](https://claude.com/claude-code) y te recomienda, prompt a prompt, **qué modelo de Claude usar** (Haiku 4.5 · Sonnet 5 · Opus 4.8 · Fable 5) y **con qué nivel de esfuerzo** (low / medium / high / xhigh), buscando el mejor equilibrio entre **calidad, coste y velocidad**.
+**AI Model Assistant** es una aplicación **100 % local para Windows** que observa en tiempo real tus sesiones de [Claude Code](https://claude.com/claude-code) y te recomienda, prompt a prompt, **qué modelo de Claude usar** (Haiku 4.5 · Sonnet 5 · Opus 4.8 · Fable 5) y **con qué nivel de esfuerzo** (low / medium / high / xhigh), buscando el mejor equilibrio entre **calidad, coste y velocidad**.
 
 ## ¿Por qué existe?
 
