@@ -11,7 +11,7 @@
 export const REGLAS = [
   // --- Específicos de alto valor primero (fija orden de inserción p/ empates) ---
   ['seguridad', 3, /\b(vulnerabilidad(es)?|vulnerabilit(y|ies)|xss|csrf|sql injection|inyecci[oó]n (sql|de comandos)|path traversal|owasp|pentest(ing)?|escalada de privilegios|privilege escalation)\b/i],
-  ['seguridad', 2, /\b(audita(r)? (la )?seguridad|security (audit|review)|revisa la seguridad|es seguro (este|el|mi)|fallo de seguridad|agujero de seguridad|secretos? (expuestos?|filtrados?|en el (repo|c[oó]digo))|api key (expuesta|filtrada)|leaked (secret|key|credential)s?)\b/i],
+  ['seguridad', 2, /\b(audita(r)? (la )?seguridad|auditor[ií]a (de seguridad|de vulnerabilidades)|security (audit|review)|revisa la seguridad|es seguro (este|el|mi)|fallo de seguridad|agujero de seguridad|secretos? (expuestos?|filtrados?|en el (repo|c[oó]digo))|api key (expuesta|filtrada)|leaked (secret|key|credential)s?)\b/i],
 
   ['refactor_masivo', 3, /\b(todo el (repo(sitorio)?|monorepo|proyecto|c[oó]digo|backend|frontend)|toda la (app|aplicaci[oó]n|base de c[oó]digo|web|plataforma)|whole (repo|project|codebase)|entire (repo|project|codebase)|reescribe todo|rewrite everything|todos los (m[oó]dulos|servicios|componentes))\b/i],
   ['refactor_masivo', 3, /\b(migraci[oó]n de framework|cambia(r)? de framework|reescritura completa|(reescr[ií]be(lo)?|rehaz(lo)?|rewrite)\b.{0,40}\b(desde cero|from scratch))\b/i],
@@ -29,7 +29,7 @@ export const REGLAS = [
   ['rendimiento', 2.5, /\b(va (muy |demasiado )?lent[oa]|tarda (mucho|much[ií]simo|\d+\s*(segundos|seg|s\b|minutos|min))|demasiado lent[oa]|too slow|very slow|cuello de botella|bottleneck|n\+1|reduce el tiempo de (carga|respuesta)|consume (mucha|demasiada) (memoria|cpu|ram)|use[sn]? too much (memory|cpu)|optimiza el rendimiento)\b/i],
   ['rendimiento', 1, /\b(rendimiento|performance|latencia|latency)\b/i],
 
-  ['refactor', 2, /\b(refactoriza(r)?|refactor(ing)?|migra(r|ci[oó]n)?|migrate|migration|reestructura(r)?|restructure|reorganiza(r)?|desacopla(r)?|decouple|moderniza(r)?|reescribe|extrae la l[oó]gica|extract the \w+ logic|separa (la l[oó]gica|las capas|responsabilidades)|split\b.{0,40}\binto)\b/i],
+  ['refactor', 2, /\b(refactori[zc]\w*|refactor(ing)?|migra(r|ci[oó]n)?|migrate|migration|reestructura(r)?|restructure|reorganiza(r)?|desacopla(r)?|decouple|moderniza(r)?|reescribe|extrae la l[oó]gica|extract the \w+ logic|separa (la l[oó]gica|las capas|responsabilidades)|split\b.{0,40}\binto)\b/i],
 
   ['revision', 2.5, /\b(code review|revisi[oó]n de c[oó]digo|audita(r)? (el|este|mi) c[oó]digo|audit (the|this|my) code|revisa (mi|el|este|esta) (pr|pull request|diff|rama|branch|commit))\b/i],
   ['revision', 2, /\b(revisa(r|me)?|review|busca (bugs|errores|fallos|problemas)|est[aá] bien (este|mi|el) c[oó]digo|look for (bugs|issues)|code smells?|dime si hay (problemas|errores|fallos|bugs)|hay algo (mal|raro) en)\b/i],
@@ -53,7 +53,7 @@ export const REGLAS = [
 
   ['analisis_datos', 2, /\b(analiza (este|el|los|estos|la|las)? ?(csv|excel|datos|dataset|fichero|logs?|m[eé]tricas)|gr[aá]ficas?|charts?|plots?|estad[ií]sticas de|media y desviaci[oó]n|pandas|agrupa por|group by|histograma|correlaci[oó]n)\b/i],
 
-  ['codificacion', 2, /\b(crea(r|me)?|implementa(r)?|a[ñn]ade|agrega(r)?|haz(me)?|escribe|desarrolla(r)?|m[oó]nta(me|r)?|create|implement|add|write|build)\b[\s\S]{0,200}?\b(funci[oó]n|function|endpoint|componente|component|tests?|pruebas?|clase|class|m[eé]todo|method|bot[oó]n|button|p[aá]gina|page|modal|formulario|form|api|ruta|route|hook|servicio|service|script|validaci[oó]n|feature|funcionalidad|men[uú]|tabla|dashboard|panel|middleware|worker|cron|webhook|paginaci[oó]n|autenticaci[oó]n|login|b[uú]squeda|filtro|cach[eé]|parser|comando|cli|vista|view|layout|animaci[oó]n|soporte|opci[oó]n|campo|columna|toggle|switch)\b/i],
+  ['codificacion', 2, /\b(cre[ae](r|me)?|implement[ae](r)?|a[ñn]ad[ae]|agreg[au][er]?|haz(me)?|escrib[ae]|desarroll[ae](r)?|m[oó]nt[ae](me|r)?|create|implement|add|write|build)\b[\s\S]{0,200}?\b(funci[oó]n|function|endpoint|componente|component|tests?|pruebas?|clase|class|m[eé]todo|method|bot[oó]n|button|p[aá]gina|page|modal|formulario|form|api|ruta|route|hook|servicio|service|script|validaci[oó]n|feature|funcionalidad|men[uú]|tabla|dashboard|panel|middleware|worker|cron|webhook|paginaci[oó]n|autenticaci[oó]n|login|b[uú]squeda|filtro|cach[eé]|parser|comando|cli|vista|view|layout|animaci[oó]n|soporte|opci[oó]n|campo|columna|toggle|switch)\b/i],
   ['codificacion', 1, /\b(crea|implementa|a[ñn]ade|agrega|desarrolla|escribe|create|implement|add|build)\b/i],
 
   ['pregunta_rapida', 2, /\b(qu[eé] (es|significa|hace|hacen|devuelve)|expl[ií]came|explica(me)?|explain|c[oó]mo (se usa|funciona|se hace)|cu[aá]l es la diferencia|diferencia entre|what (is|does|are)|how do(es)? (i|it|this)|por qu[eé]|why (is|does)|traduce|translate|d[oó]nde (est[aá]|se define|se usa)|where is|res[uú]me(me|lo)?|summarize)\b/i],
@@ -66,6 +66,13 @@ export const RE_ACK = /^[\s"'¡¿]*(s[ií]|ok(ey)?|vale|venga|perfecto|genial|cl
 
 /** Orden de continuar ("continúa", "siguiente paso") al inicio de un prompt corto. */
 export const RE_CONTINUACION = /^[¿¡"'\s]*(contin[uú]a|sigue(?!\s+(fallando|sin|rot))|dale|adelante|venga|hazlo|procede|prosigue|continue|go ahead|next|siguiente|do it|keep going)\b/i;
+
+/**
+ * Orden corta que se refiere a lo que el asistente acaba de proponer
+ * ("implementa", "sí, hazlo", "aplica el plan", "opción 2"). El prompt no dice
+ * QUÉ hacer: el qué está en la última respuesta del asistente.
+ */
+export const RE_ORDEN_REFERENCIAL = /^[¿¡"'\s]*(s[ií][,.\s]+)?(impl[eé]m[eé]ntal[oa]s?|implementa(l[oa]s?)?|hazl[oa]s?|apl[ií]cal[oa]s?|aplica (el|la|los|las) (plan|cambios?|propuesta|parche|fix|soluci[oó]n|opci[oó]n)|adelante con (ello|eso|todo|el plan|la propuesta)|ejecuta (el|tu|ese) plan|haz lo que (propones|dices|sugieres)|(elijo|usa|ve con|vamos con)? ?la opci[oó]n \d|opci[oó]n \d|procede con (el plan|la propuesta)|do that|implement (it|that)|apply the (plan|changes?|fix))\b/i;
 
 /** Puntúa el texto contra todas las reglas. → Map tipo → puntos acumulados. */
 export function puntuar(texto) {

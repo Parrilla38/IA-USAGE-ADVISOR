@@ -40,5 +40,8 @@ export function extraerSenales(texto, estado, cfg, esfuerzoActual) {
     mencionRepoEntero: RE_REPO_ENTERO.test(texto),
     tipoPrevio: estado.ultimaRec?.l1?.tipoId ?? null,
     confPrevia: estado.ultimaRec?.l1?.confianza ?? null,
+    // Última respuesta del asistente: en el hook aún está en el buffer del turno;
+    // en la ruta del transcript ya rotó a respuestaPrevia al aplicar el prompt.
+    textoAsistente: (estado.textoAsistenteTurno || estado.respuestaPrevia || '').slice(-1200) || null,
   };
 }

@@ -1,4 +1,4 @@
-import { puntuar, RE_ACK, RE_CONTINUACION } from './lexicon.es.js';
+import { puntuar, RE_ACK, RE_CONTINUACION, RE_ORDEN_REFERENCIAL } from './lexicon.es.js';
 import { moverModelo, moverEsfuerzo, maxModelo, maxEsfuerzo, idxModelo } from './modelos.js';
 
 /** Rúbrica base: tipo de tarea → grupo, modelo, esfuerzo, confianza. */
@@ -78,15 +78,32 @@ export function recomendar(s, cfg) {
   let det = elegirTipo(punt);
   let tipo = det?.tipo ?? null;
 
-  // Continuación / confirmación corta: hereda el tipo del turno anterior
-  // (solo si el léxico no encontró nada fuerte por sí mismo).
-  if (s.tipoPrevio && BASE[s.tipoPrevio] && (det?.puntos ?? 0) < 2 &&
-      (RE_ACK.test(s.texto) || (RE_CONTINUACION.test(s.texto) && s.palabras <= 8))) {
-    tipo = s.tipoPrevio;
-    det = null;
-    esContinuacion = true;
-    confOverride = Math.min(0.75, Math.max(0.5, (s.confPrevia ?? BASE[tipo].conf) - 0.1));
-    razones.push('continuación del turno anterior: hereda el tipo de tarea');
+  // Prompt referencial ("sí, hazlo", "implementa", "continúa"): el QUÉ no está
+  // en el prompt sino en el contexto. Solo si el léxico no encontró nada fuerte.
+  const esAck = RE_ACK.test(s.texto);
+  const esOrden = RE_ORDEN_REFERENCIAL.test(s.texto) && s.palabras <= 8;
+  const esCont = RE_CONTINUACION.test(s.texto) && s.palabras <= 8;
+  if ((det?.puntos ?? 0) < 2 && (esAck || esOrden || esCont)) {
+    // La propuesta en curso vive en la última respuesta del asistente: puntuarla.
+    const detAsist = s.textoAsistente ? elegirTipo(puntuar(s.textoAsistente)) : null;
+    const asistFuerte = detAsist && detAsist.puntos >= 2 && BASE[detAsist.tipo] ? detAsist : null;
+    const previo = s.tipoPrevio && BASE[s.tipoPrevio] ? s.tipoPrevio : null;
+    // ACK/orden confirman lo que el asistente propuso; "continúa" retoma lo
+    // que ya se estaba haciendo (tipo previo) y usa la propuesta como respaldo.
+    const usarAsistente = asistFuerte && ((esAck || esOrden) || !previo);
+    if (usarAsistente) {
+      tipo = asistFuerte.tipo;
+      det = null;
+      esContinuacion = true;
+      confOverride = Math.min(0.72, Math.max(0.55, BASE[tipo].conf - 0.1));
+      razones.push(`confirma la propuesta previa del asistente (${BASE[tipo].nombre.toLowerCase()})`);
+    } else if (previo) {
+      tipo = previo;
+      det = null;
+      esContinuacion = true;
+      confOverride = Math.min(0.75, Math.max(0.5, (s.confPrevia ?? BASE[tipo].conf) - 0.1));
+      razones.push('continuación del turno anterior: hereda el tipo de tarea');
+    }
   }
 
   if (tipo === 'ambigua' && (s.palabras >= 25 || s.ficheros > 0 || s.densidadCodigo >= 0.3 || RE_OBJETO_CONCRETO.test(s.texto))) {

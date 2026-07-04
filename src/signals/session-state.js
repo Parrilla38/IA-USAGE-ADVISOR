@@ -13,6 +13,8 @@ export class SessionState {
     this.resultadosTools = []; // últimos 10; true = error
     this.attachmentsPendientes = 0;
     this.attachmentsTurno = 0;
+    this.textoAsistenteTurno = ''; // texto del asistente desde el último prompt
+    this.respuestaPrevia = '';     // respuesta que el usuario está contestando ahora
     this.ultimoSidechainTs = 0;
     this.ultimaActividadTs = 0;
     this.statusline = { ctxPct: null, cuota5h: null, cuotaSemana: null, reset5h: null, modeloId: null };
@@ -50,10 +52,17 @@ export class SessionState {
         this.attachmentsPendientes = 0;
         this.modeloTurno = null;
         this.erroresTurno = 0;
+        // La respuesta acumulada pasa a ser "lo que este prompt contesta". Si el
+        // turno no tuvo texto (prompts encolados) se conserva la anterior.
+        if (this.textoAsistenteTurno) this.respuestaPrevia = this.textoAsistenteTurno;
+        this.textoAsistenteTurno = '';
         if (ev.cwd) this.cwd = ev.cwd;
         if (ev.gitBranch) this.gitBranch = ev.gitBranch;
         break;
       case 'assistant':
+        if (ev.texto) {
+          this.textoAsistenteTurno = (this.textoAsistenteTurno + '\n' + ev.texto).slice(-1500);
+        }
         if (ev.modelo) {
           this.modeloActualId = ev.modelo;
           this.modeloTurno = mapearModelo(ev.modelo) || this.modeloTurno;

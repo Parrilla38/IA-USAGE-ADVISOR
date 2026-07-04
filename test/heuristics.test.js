@@ -86,6 +86,40 @@ test('confirmación tipo "sí, hazlo" hereda el tipo del turno anterior', () => 
   assert.equal(rec.modelo, 'fable');
 });
 
+test('"implementa" tras propuesta de auditoría de seguridad → adopta seguridad (opus/xhigh)', () => {
+  const propuesta = 'He revisado el endpoint y veo riesgos. ¿Quieres que haga una auditoría de seguridad completa buscando vulnerabilidades como XSS e inyección SQL?';
+  const rec = recomendar(senalesDe('Implementa', { textoAsistente: propuesta }), cfg);
+  assert.equal(rec.tipoId, 'seguridad');
+  assert.equal(rec.modelo, 'opus');
+  assert.equal(rec.esfuerzo, 'xhigh');
+  assert.ok(rec.razones.some((r) => r.includes('propuesta previa del asistente')));
+});
+
+test('"sí, hazlo" tras propuesta del asistente pesa más que el tipo previo del usuario', () => {
+  const propuesta = 'Puedo diseñar la arquitectura del sistema de colas: modelo de datos, trade-offs y plan de migración. ¿Lo hago?';
+  const rec = recomendar(senalesDe('sí, hazlo', { textoAsistente: propuesta, tipoPrevio: 'pregunta_rapida', confPrevia: 0.85 }), cfg);
+  assert.equal(rec.tipoId, 'arquitectura');
+  assert.equal(rec.modelo, 'fable');
+});
+
+test('"continúa" prefiere el tipo previo aunque haya texto del asistente', () => {
+  const charla = 'He encontrado un error en el módulo y lo estoy arreglando, falla un test.';
+  const rec = recomendar(senalesDe('continúa', { textoAsistente: charla, tipoPrevio: 'refactor', confPrevia: 0.75 }), cfg);
+  assert.equal(rec.tipoId, 'refactor');
+  assert.equal(rec.modelo, 'opus');
+});
+
+test('"continúa" sin tipo previo usa la propuesta del asistente como respaldo', () => {
+  const propuesta = '¿Quieres que refactorice el módulo de pagos separando la lógica en capas?';
+  const rec = recomendar(senalesDe('continúa', { textoAsistente: propuesta }), cfg);
+  assert.equal(rec.tipoId, 'refactor');
+});
+
+test('"implementa" sin ningún contexto no rompe', () => {
+  const rec = recomendar(senalesDe('Implementa'), cfg);
+  assert.ok(['haiku', 'sonnet'].includes(rec.modelo));
+});
+
 test('sin turno previo, "continúa" no rompe (cae al fallback)', () => {
   const rec = recomendar(senalesDe('continúa'), cfg);
   assert.equal(rec.modelo, 'haiku');

@@ -80,7 +80,7 @@ Cada prompt se puntúa contra ~35 reglas léxicas ES/EN con **pesos por especifi
 
 La puntuación también calibra la **confianza**: varias señales independientes que coinciden la suben; señales mixtas que apuntan a modelos distintos («explica el error»: ¿pregunta o bug?) la bajan y se declara en las razones.
 
-Además hay **memoria de sesión**: una continuación corta («continúa», «sí, hazlo») hereda el tipo de tarea del turno anterior en vez de caer en "pregunta rápida", y dos peticiones de arreglo seguidas escalan la capacidad (si el primer intento no bastó, el problema es más duro de lo que parece).
+Además hay **memoria de sesión** con contexto conversacional: si Claude propone algo («¿quieres que haga una auditoría de seguridad?») y respondes «implementa» o «sí, hazlo», el asesor puntúa la **última respuesta del asistente** para saber QUÉ vas a implementar y recomienda modelo para esa tarea (auditoría → Opus/xhigh), no para las dos palabras del prompt. Una continuación («continúa») hereda el tipo de tarea del turno anterior en vez de caer en "pregunta rápida", y dos peticiones de arreglo seguidas escalan la capacidad (si el primer intento no bastó, el problema es más duro de lo que parece).
 
 Después aplica **modificadores** en orden: racha de fallos de herramientas ⇒ sube capacidad · cuota alta ⇒ baja a modelo más económico (salvo tareas frontera) · cuota crítica ⇒ baja dos niveles · preferencia "rápido" ⇒ tope en Sonnet · subagentes activos ⇒ nunca bajar de modelo a mitad de orquestación. La brevedad del prompt solo abarata tareas estándar: «hay un deadlock» son tres palabras y sigue siendo trabajo para Opus.
 

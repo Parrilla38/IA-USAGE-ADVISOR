@@ -45,11 +45,13 @@ export function parsearEntrada(e) {
       if (!m) return null;
       if (e.isSidechain) return { kind: 'sidechain', ts: e.timestamp };
       const contenido = Array.isArray(m.content) ? m.content : [];
+      const texto = contenido.filter((b) => b && b.type === 'text').map((b) => b.text).join('\n');
       return {
         kind: 'assistant',
         modelo: m.model || null,
         usage: m.usage || null,
         toolUses: contenido.filter((b) => b && b.type === 'tool_use').length,
+        texto: texto ? texto.slice(-1500) : null,
         ts: e.timestamp,
       };
     }
